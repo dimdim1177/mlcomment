@@ -210,8 +210,13 @@
 
         //EN Patch file/stdin content
         protected static function patch():bool {
-            if ('-' === static::$filename) $content = fread(STDIN, 128 * 1024 * 1024);
-            else $content = file_get_contents(static::$filename);
+            if ('-' === static::$filename) {
+                $content = '';
+                while (($buf = fread(STDIN, 128 * 1024 * 1024))) {
+                    $content .= $buf;
+                    usleep(50000);
+                }
+            } else $content = file_get_contents(static::$filename);
             if (preg_match_all(static::D.static::$reblock.static::D.'u', $content, $m, PREG_OFFSET_CAPTURE)) {
                 $dbofs = 0;
                 foreach ($m[0] as $blockdata) {
