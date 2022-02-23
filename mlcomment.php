@@ -1,12 +1,24 @@
 #!/usr/bin/php
 <?php
 
-    /// \file
-    /// \author Dmitrii Dmitriev
-    ///	\date 02.2022
-    /// \copyright MIT
-    /// @todo set language (find all comment without language and set language for it)
-    /// @todo flag of draft ! , when ///EN! mean draft comment (code changed, but comment not; autotranslating; must be review and so on)
+///RU \file
+///RU Многоязычные комментарии
+///RU Скрипт разработан для простого извлечения и документировавания кода с многоязычными комментариями
+///RU Разрабатывался и тестировался в Debian 11 / PHP 7.4.
+///RU \author Дмитрий Дмитриев
+///RU \date 02.2022
+///RU \copyright MIT
+///RU \todo 1. Установка языка (найти все комментарии без языка и установить язык для них)
+///RU \todo 2. Флаг черновика ! , когда комментарий //EN! означает черновой комментарий (код изменен, но комментарий нет; авто-перевод; должно быть проверено и т.д.)
+///EN \file
+///EN Multi-language comments
+///EN The script is designed for easy extraction and documentation of code with multilingual comments.
+///EN Developed and testing under Debian 11 / PHP 7.4.
+///EN \author Dmitrii Dmitriev
+///EN \date 02.2022
+///EN \copyright MIT
+///EN \todo 1. Set language (find all comment without language and set language for it)
+///EN \todo 2. Flag of draft ! , when //EN! mean draft comment (code changed, but comment not; auto-translating; must be review and so on)
 
     class MLComment {
         ///RU Ключ командной строки для указания приоритетов языков
