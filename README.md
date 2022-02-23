@@ -5,8 +5,13 @@ Developed and testing under Debian 11 / PHP 7.4.
 
 ### Usage
 
-First time, you must install Linux and PHP7 :) Then, clone repo and use mlcomment.php as binary, or you can call it but php mlcomment.php.
+First time, you must install Linux and PHP7 :) Then, clone repo and use `mlcomment.php` as binary, or you can call it by `php mlcomment.php`.
 
+`mlcomment.php [options] dox|most  FILENAME|-`
+
+For example:
+
+`mlcomment.php -l RU dox ./source.cpp > patched.ru.cpp`
 
 ### How it works
 
