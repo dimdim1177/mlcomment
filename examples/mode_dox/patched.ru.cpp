@@ -1,19 +1,21 @@
 
-int Hello = 0;//< Переменная Привет
+int Hello = 0;///< Переменная Привет
 
 
-// Переменная Мир
+/// Переменная Мир
 char World;
 
-int onlyRU;//< Есть только русский комментарий
+int onlyRU;///< Есть только русский комментарий
 
-int onlyEN;//< Has only English comment
-
-
+int onlyEN;///< Has only English comment
 
 
 
-/* Функция main
+
+
+
+/**
+    Функция main
 
     Подробное описание
 */

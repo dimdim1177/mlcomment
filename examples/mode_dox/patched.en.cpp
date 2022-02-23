@@ -1,19 +1,21 @@
 
-int Hello = 0;//< Variable Hello
+int Hello = 0;///< Variable Hello
 
 
-// Variable World
+/// Variable World
 char World;
 
-int onlyRU;//< Есть только русский комментарий
+int onlyRU;///< Есть только русский комментарий
 
-int onlyEN;//< Has only English comment
-
-
+int onlyEN;///< Has only English comment
 
 
 
-/* Function main
+
+
+
+/**
+    Function main
 
     Full description
 */

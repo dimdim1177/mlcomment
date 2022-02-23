@@ -1,89 +1,96 @@
 #!/usr/bin/php
 <?php
 
+    /// \file
+    /// \author Dmitrii Dmitriev
+    ///	\date 02.2022
+    /// \copyright MIT
+    /// @todo set language (find all comment without language and set language for it)
+    /// @todo flag of draft ! , when ///EN! mean draft comment (code changed, but comment not; autotranslating; must be review and so on)
+
     class MLComment {
-        //RU Ключ командной строки для указания приоритетов языков
-        //EN Command line option for set languages priority
+        ///RU Ключ командной строки для указания приоритетов языков
+        ///EN Command line option for set languages priority
         const OPT_PRIOR = 'p';
 
-        //RU Ключ командной строки для выбора языка (этот язык встает на первое место в приоритетах)
-        //EN Command line option for select language (this language moved to the first place in priority)
+        ///RU Ключ командной строки для выбора языка (этот язык встает на первое место в приоритетах)
+        ///EN Command line option for select language (this language moved to the first place in priority)
         const OPT_LANG = 'l';
 
-        //RU По умолчанию название языка удаляется после обработки, этот ключ позволяет его оставить
-        //EN By default language suffix in comment removed, this option could save it
+        ///RU По умолчанию название языка удаляется после обработки, этот ключ позволяет его оставить
+        ///EN By default language suffix in comment removed, this option could save it
         const OPT_SAVELANG = 's';
 
-        //RU Как начинаются однострочные комментарии, можно несколько вариантов через пробел
-        //EN Begin of one-line comments, available space separated list
+        ///RU Как начинаются однострочные комментарии, можно несколько вариантов через пробел
+        ///EN Begin of one-line comments, available space separated list
         const OPT_LINE = 'n';
 
-        //RU Как открываются многострочные комментарии, можно несколько вариантов через пробел
-        //EN Open of multi-line comments, available space separated list
+        ///RU Как открываются многострочные комментарии, можно несколько вариантов через пробел
+        ///EN Open of multi-line comments, available space separated list
         const OPT_OPEN = 'o';
 
-        //RU Как закрываются многострочные комментарии, можно несколько вариантов через пробел
-        //EN Close of multi-line comments, available space separated list
+        ///RU Как закрываются многострочные комментарии, можно несколько вариантов через пробел
+        ///EN Close of multi-line comments, available space separated list
         const OPT_CLOSE = 'c';
 
-        //RU Вывод справки
-        //EN Show help
+        ///RU Вывод справки
+        ///EN Show help
         const OPT_HELP = 'h';
 
-        //RU Предобработка файла для Doxygen
-        //EN Preprocessing comments for Doxygen
+        ///RU Предобработка файла для Doxygen
+        ///EN Preprocessing comments for Doxygen
         const MODE_DOX = 'dox';
 
-        //RU Оставить комментарии только на самом приоритетном языке
-        //EN Only most priority language comments
+        ///RU Оставить комментарии только на самом приоритетном языке
+        ///EN Only most priority language comments
         const MODE_MOST = 'most';
 
-        //RU Все режимы
-        //EN All modes
+        ///RU Все режимы
+        ///EN All modes
         protected static $modes = [ self::MODE_DOX, self::MODE_MOST ];
 
-        //RU Приоритет языков по умолчанию
-        //EN Priority of languages by default
+        ///RU Приоритет языков по умолчанию
+        ///EN Priority of languages by default
         protected static $langs = [ 'EN', 'RU', 'ES', 'FR', 'IT' ];
 
-        //RU Выбранный самый приоритетный язык
-        //EN Selected most priority language
+        ///RU Выбранный самый приоритетный язык
+        ///EN Selected most priority language
         protected static $lang = '';
 
-        //RU Начало однострочного комментария
-        //EN Begin of one-lime comment
+        ///RU Начало однострочного комментария
+        ///EN Begin of one-lime comment
         protected static $line = ['//'];
 
-        //RU Открытие многострочного комментария
-        //EN Open of multi-line comment
+        ///RU Открытие многострочного комментария
+        ///EN Open of multi-line comment
         protected static $open = ['/*'];
 
-        //RU Закрытие многострочного комментария
-        //EN Close of multi-line comment
+        ///RU Закрытие многострочного комментария
+        ///EN Close of multi-line comment
         protected static $close = ['*/'];
 
-        //RU Сохранять ли язык в комментариях
-        //EN Save language in comments
+        ///RU Сохранять ли язык в комментариях
+        ///EN Save language in comments
         protected static $savelang = false;
 
-        //RU Выбранный режим
-        //EN Selected mode
+        ///RU Выбранный режим
+        ///EN Selected mode
         protected static $mode = '';
 
-        //RU Файл для обработки, '-' - stdin
-        //EN File for patch, '-' - stdin
+        ///RU Файл для обработки, '-' - stdin
+        ///EN File for patch, '-' - stdin
         protected static $filename = '';
 
-        //RU Разделительный символ для паттера регулярки
-        //EN Delimiter symbol of regexp pattern
+        ///RU Разделительный символ для паттера регулярки
+        ///EN Delimiter symbol of regexp pattern
         const D = '/';
 
-        //RU RegExp для извлечения одного комментария с языками
-        //EN RegExp for one comment with languages
+        ///RU RegExp для извлечения одного комментария с языками
+        ///EN RegExp for one comment with languages
         protected static $reone;
 
-        //RU RegExp для блока комментариев на разных языках (из которых будет выбирать приоритетный)
-        //EN RegExp for block of multi-language comments (most priority language will be selected)
+        ///RU RegExp для блока комментариев на разных языках (из которых будет выбирать приоритетный)
+        ///EN RegExp for block of multi-language comments (most priority language will be selected)
         protected static $reblock;
 
         public static function run(array $argv):bool {
@@ -92,19 +99,19 @@
             return static::patch();
         }
 
-        //RU Разбор аргументов командной строки
-        //EN Parse command line arguments
+        ///RU Разбор аргументов командной строки
+        ///EN Parse command line arguments
         protected static function parseArgs(array $argv): bool {
             $errors = [];
             for ($i = 1; $i < count($argv); ++$i) {
                 $arg = $argv[$i]; $len = mb_strlen($arg);
                 if (('-' == mb_substr($arg, 0, 1)) and ($len > 1)) {
-                    $opt = mb_substr($arg, 1, 1);//RU Опция
+                    $opt = mb_substr($arg, 1, 1);///RU Опция
                     if ($len > 2) {
-                        $v = trim(mb_substr($arg, 2), '"\'');//RU Значение
+                        $v = trim(mb_substr($arg, 2), '"\'');///RU Значение
                         $in = "in '$arg'";
                     } else {
-                        $v = trim($argv[++$i] ?? '', '"\'');//RU Значение
+                        $v = trim($argv[++$i] ?? '', '"\'');///RU Значение
                         $in = "in '-$opt $v'";
                     }
                     switch ($opt) {
@@ -174,8 +181,8 @@
             return true;
         }
 
-        //RU Вывод справки о параметрах
-        //EN Print usage of script
+        ///RU Вывод справки о параметрах
+        ///EN Print usage of script
         public static function usage($argv, bool $tostderr = false):void {
             fwrite($tostderr ? STDERR : STDOUT, implode("\n", [
                 "Usage: ".basename($argv[0]).
@@ -201,14 +208,14 @@
             ])."\n\n");
         }
 
-        //EN Space separated list explode
+        ///EN Space separated list explode
         protected static function vlist(string $v): array {
             $list = explode(' ', $v);
             foreach ($list as &$l) $l = trim($l); unset($l);
             return $list;
         }
 
-        //EN Patch file/stdin content
+        ///EN Patch file/stdin content
         protected static function patch():bool {
             if ('-' === static::$filename) {
                 $content = '';
@@ -227,14 +234,14 @@
                         static::stderr("Logic error: Not found comments in block, skip it:\n$block");
                         continue;
                     }
-                    //RU Какие языки есть в этом блоке
+                    ///RU Какие языки есть в этом блоке
                     $langs = []; $ci = count($mb[0]);
                     for ($l = 0; $l <= count(static::$open); ++$l) {
                         foreach (($mb['lang'.$l] ?? []) as $i => $langdata) {
                             if (($lang = $langdata[0] ?? '')) $langs[mb_strtoupper($lang)][] = $i;
                         }
                     }
-                    //RU Отбираем самый приоритетный язык
+                    ///RU Отбираем самый приоритетный язык
                     $slang = '';
                     foreach (static::$langs as $lang) {
                         if (isset($langs[$lang])) {
@@ -250,10 +257,10 @@
                     for ($i = 0; $i < $ci; ++$i) {
                         $cofs = $mb['comment'][$i][1];
                         $clen = strlen($mb['comment'][$i][0]);
-                        if (in_array($i, $langs[$slang], true)) {//RU Оставляем комментарий
-                            if (static::$savelang) continue;//RU Есл сохраняем и язык, то нет изменений
+                        if (in_array($i, $langs[$slang], true)) {///RU Оставляем комментарий
+                            if (static::$savelang) continue;///RU Есл сохраняем и язык, то нет изменений
                             $comment = '';
-                            for ($l = 0; $l <= count(static::$open); ++$l) {//RU Ищем блок с комментарием по типу
+                            for ($l = 0; $l <= count(static::$open); ++$l) {///RU Ищем блок с комментарием по типу
                                 if (!($mb['lang'.$l][$i][0] ?? '')) continue;
                                 $comment = $mb['open'.$l][$i][0].$mb['body'.$l][$i][0];
                                 break;
@@ -263,7 +270,7 @@
                                 continue;
                             }
                         } else {
-                            //RU Удаляем комментарий сохраняя кол-во строк
+                            ///RU Удаляем комментарий сохраняя кол-во строк
                             $comment = implode("\n", array_fill(0, count(explode("\n", $mb['comment'][$i][0])), ''));
                         }
                         $newclen = strlen($comment);
@@ -271,18 +278,18 @@
                         $dcofs += $newclen - $clen;
                     }
                     $lines = explode("\n", $block); $clines = count($lines);
-                    $ibeg = 0; $iend = $clines - 1;//RU Какие строки сохраняем
+                    $ibeg = 0; $iend = $clines - 1;///RU Какие строки сохраняем
                     foreach ($lines as $i => &$line) {
                         if (!($line = rtrim($line))) {
-                            if ($i == $ibeg) ++$ibeg;//RU Удаляем пустые строки вначале блока
-                        } else $iend = $i;//RU Последня непустая строка
+                            if ($i == $ibeg) ++$ibeg;///RU Удаляем пустые строки вначале блока
+                        } else $iend = $i;///RU Последня непустая строка
                     }
                     unset($line);
                     if (($ibeg > 0) || ($iend < ($clines - 1))) {
                         $lines = array_slice($lines, $ibeg, $iend - $ibeg + 1);
                         $block = implode("\n", $lines);
                         $newclines = count($lines);
-                        if ((static::MODE_DOX === static::$mode) && ($newclines < $clines)) {//RU Doxygen критичен к кол-ву строк, добавляем пустых строк
+                        if ((static::MODE_DOX === static::$mode) && ($newclines < $clines)) {///RU Doxygen критичен к кол-ву строк, добавляем пустых строк
                             $block = implode("\n", array_fill(0, $clines - $newclines, '')).$block;
                         }
                     }
@@ -296,7 +303,7 @@
             return true;
         }
 
-        //EN Prepare RegExps
+        ///EN Prepare RegExps
         protected static function prepareRE():void {
             $lchars = [];
             foreach (static::$line as $l) {
@@ -327,7 +334,4 @@
 
     MLComment::run($argv);
 
-    //TODO
-    // - set language (find all comment without language and set language for it)
-    // - flag of draft ! , when //EN! mean draft comment (code changed, but comment not; autotranslating; must be review and so on)
 

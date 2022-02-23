@@ -1,6 +1,7 @@
-### Multi-language comment
+## Multi-language comments
 
 The script is designed for easy extraction and documentation of code with multilingual comments.
+Developed and testing under Debian 11 / PHP 7.4.
 
 ### Usage
 
@@ -56,8 +57,26 @@ Modes:
 - most - Only most priority language comments (other to clear)
 
 FILENAME - path to file for patching, '-' - use stdin
+
 Output always to stdout
 
 For example:
 
 `mlcomment.php -l RU -n "//" -o "/*" -c "*/" dox ./source.cpp > patched.ru.cpp`
+
+### Examples
+
+#### mode_dox (patch for Doxygen)
+
+Usage of mode 'dox' - patch comments for auto-documenting by Doxygen.
+Please, look to scripts and its results.
+
+#### mode_most (extract one language comments)
+
+Scripts extract one most priority language comment per block.
+Please, look to scripts and its results.
+
+#### mode_most_savelang (extract one language comments, but save language code)
+
+Scripts extract one most priority language comment per block, but save 2-letter language codes in it. Usable, for add translates, when they not exists.
+Please, look to scripts and its results.
