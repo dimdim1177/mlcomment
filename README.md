@@ -47,7 +47,7 @@ If no comment in selected language, used next available language by priority, de
 
 ### Full avaliable options
 
-Usage: mlcomment.php [Options] dox|most  FILENAME|-, where
+Usage: mlcomment.php [Options] dox|most|translate  FILENAME|-, where
 
 Options:
 - -p LANGS - set languages priority
@@ -56,14 +56,16 @@ Options:
 - -n ONELINE - begin of one-line comments, may be many variants space separated
 - -o OPEN - open of multi-line comments, may be many variants space separated
 - -c CLOSE - close of multi-line comments, may be many variants space separated
+- -y JSONFILE - JSON-file with access to Yandex Cloud with fields: folder_id AND (oauth_token OR iam_token) (required for mode translate, ignored in other modes)
 
 Modes:
 - dox - Preprocessing comments for Doxygen
 - most - Only most priority language comments (other to clear)
+- translate - Add comments in selected language by auto-translate from most priority exists language
 
-FILENAME - path to file for patching, '-' - use stdin
+Input: FILENAME - path to file for patching, '-' - use stdin
 
-Output always to stdout
+Output: Always to stdout
 
 For example:
 
@@ -85,3 +87,56 @@ Please, look to scripts and its results.
 
 Scripts extract one most priority language comment per block, but save 2-letter language codes in it. Usable, for add translates, when they not exists.
 Please, look to scripts and its results.
+
+#### mode_translate (add other language comments auto-translated by Yandex)
+
+Scripts search blocks, where absent comments in selected language and add to block auto-translated by Yandex comments in selected language.
+
+This block
+```
+int Hello = 0;///RU< Переменная Привет
+
+///RU Переменная Мир
+///RU
+///RU Подробнейшее описание с деталями
+char World;
+```
+Patched to this state:
+```
+int Hello = 0;///RU< Переменная Привет ///EN~< Variable Hello
+
+///RU Переменная Мир
+///RU
+///RU Подробнейшее описание с деталями
+///EN~ Variable World
+///EN~
+///EN~ Detailed description with details
+char World;
+```
+
+Sign ~ mark auto-transled comments for checking by user and manually clear mark after review.
+ 
+Please, look to scripts and its results.
+
+For use this mode you must has active Yandex Cloud account:
+1. Register at https://cloud.yandex.ru/
+2. Get FOLDER_ID from this page https://console.cloud.yandex.ru/ (default folder created with account)
+3. Create billing account at https://console.cloud.yandex.ru/billing (you must attach bank card, but it is free)
+4. Activate trial mode
+4. Get OAuth token, see here https://cloud.yandex.ru/docs/iam/operations/iam-token/create
+5. Then you can use OAuth token or create one day usage IAm Token  
+
+Then create yandex.json file for -y option, this format
+```
+{
+  "folder_id": "FOLDER_ID",
+  "iam_token": "IAM_TOKEN"
+}
+```
+Or this format, both usable (of cource, you must fill ID and TOKEN)
+```
+{
+  "folder_id": "FOLDER_ID",
+  "oauth_token": "OAUTH_TOKEN"
+}
+```
