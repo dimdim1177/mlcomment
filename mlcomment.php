@@ -49,6 +49,14 @@
         ///EN JSON-file with access to Yandex Cloud with fields: folder_id AND (oauth_token OR iam_token)
         const OPT_YANDEX = 'y';
 
+        ///RU Не выводить символ червового комментария DRAFT
+        ///EN Don't attach DRAFT sign to translated comments
+        const OPT_NODRAFT = 'd';
+
+        ///RU Результат работы скрипта записать назад в файл поверх
+        ///EN Overwrite result of patch to source file
+        const OPT_INPLACE = 'i';
+
         ///RU Вывод справки
         ///EN Show help
         const OPT_HELP = 'h';
@@ -107,7 +115,7 @@
 
         ///RU Символ чернового комментария
         ///EN Symbol of draft comment
-        const  DRAFT = '~';
+        const DRAFT = '~';
 
         ///RU RegExp для извлечения одного комментария с языками
         ///EN RegExp for one comment with languages
@@ -117,9 +125,17 @@
         ///EN RegExp for block of multi-language comments (most priority language will be selected)
         protected static $reblock;
 
-        //RU Доступы к Yandex Cloud
-        //RU Access data for Yandex Cloud
+        ///RU Доступы к Yandex Cloud
+        ///RU Access data for Yandex Cloud
         protected static $yandex;
+
+        ///RU Выводить символ DRAFT для переведенных комментариев
+        ///EN Attach sign DRAFT to translated comments
+        protected static $draft = true;
+
+        ///RU Результат работы скрипта записать назад в файл поверх, иначе вывести в stdout
+        ///EN Overwrite result of patch to source file, else write to stdout
+        protected static $inplace = false;
 
         const YANDEX_FOLDER_ID = 'folder_id';
         const YANDEX_OAUTH_TOKEN = 'oauth_token';
@@ -183,6 +199,8 @@
                             $errors[] = "Invalid JSON-file '$v' $in";
                         } else static::$yandex = $yandex;
                     };break;
+                    case static::OPT_NODRAFT: { if (2 == $len) --$i; static::$draft = false; };break;
+                    case static::OPT_INPLACE: { if (2 == $len) --$i; static::$inplace = true; };break;
                     case static::OPT_HELP: {
                         static::usage($argv);
                         return false;
@@ -232,6 +250,9 @@
                     " [-".static::OPT_LINE.' "'.implode(' ', static::$line).'"'."]".
                     " [-".static::OPT_OPEN.' "'.implode(' ', static::$open).'"'."]".
                     " [-".static::OPT_CLOSE.' "'.implode(' ', static::$close).'"'."]".
+                    " [-".static::OPT_YANDEX." JSONFILE]".
+                    " [-".static::OPT_NODRAFT."]".
+                    " [-".static::OPT_INPLACE."]".
                     " ".implode('|', static::$modes)." ".
                     " FILENAME|-, where",
                 "Options:",
@@ -243,13 +264,14 @@
                 "-".static::OPT_CLOSE." CLOSE - close of multi-line comments, may be many variants space separated",
                 "-".static::OPT_YANDEX." JSONFILE - JSON-file with access to Yandex Cloud with fields: ".static::YANDEX_FOLDER_ID.
                     " AND (".static::YANDEX_OAUTH_TOKEN." OR ".static::YANDEX_IAM_TOKEN.") (required for mode ".static::MODE_TRANSLATE.", ignored in other modes)",
+                "-".static::OPT_NODRAFT." - don't attach sign ".static::DRAFT." to translated comments (by default attach ".static::DRAFT.")",
+                "-".static::OPT_INPLACE." - patch inplace, overwrite result of patch to source file (by default write to stdout)",
                 "Modes:",
                 static::MODE_DOX." - Preprocessing comments for Doxygen",
                 static::MODE_MOST." - Only most priority language comments (other to clear)",
                 static::MODE_TRANSLATE." - Add comments in selected language by auto-translate from most priority exists language",
                 "Input:",
                 "FILENAME - path to file for patching, '-' - use stdin",
-                "Output always to stdout",
             ])."\n\n");
         }
 
@@ -379,6 +401,7 @@
                     unset($texts);
                     //RU Вставляем новый язык после блоков комментариев
                     $dofs = 0;
+                    $draft = (static::$draft ? static::DRAFT : '');
                     foreach ($translate as $b => $t) {
                         $blockdata = $m[0][$b];
                         $block = $blockdata[0]; $blen = strlen($block); $bofs = $blockdata[1] + $dofs;
@@ -392,11 +415,11 @@
                         $firstComment = reset($t['comments']);
                         if (!$firstComment['close']) {//RU Однострочные комментарии
                             $lines = explode("\n", $text);
-                            foreach ($lines as &$line) $line = (string)$prefix.$firstComment['open'].static::$lang.static::DRAFT.$line;
+                            foreach ($lines as &$line) $line = (string)$prefix.$firstComment['open'].static::$lang.$draft.(' ' !== substr($line, 0, 1) ? ' ' : '').$line;
                             unset($line);
                             $text = implode("\n", $lines);
                         } else {//RU Многострочные комментарии
-                            $text = $firstComment['open'].static::$lang.static::DRAFT.$text;
+                            $text = $firstComment['open'].static::$lang.$draft.$text;
                         }
                         $text = (false !== $prefix ? "\n" : ' ').$text;
                         $content = $before.substr($block, 0, $blen - strlen($tail)).$text.$tail.substr($content, $bofs + $blen);
@@ -404,7 +427,8 @@
                     }
                 }
             }
-            echo $content;
+            if ((static::$inplace) && ('-' !== static::$filename)) file_put_contents(static::$filename, $content);
+            else echo $content;
             return true;
         }
 
@@ -446,17 +470,32 @@
             if (!($IAmToken = ($yandex[static::YANDEX_IAM_TOKEN] ?? ''))) {
                 if (!($IAmToken = static::yandexIAmToken($yandex[static::YANDEX_OAUTH_TOKEN]))) return null;
             }
-            $data = [
-                'folder_id' => $yandex[static::YANDEX_FOLDER_ID],
-                'texts' => $texts,
-                'targetLanguageCode' => mb_strtolower($toLang),
-            ];
-            if ($fromLang) $data['sourceLanguageCode'] = mb_strtolower($fromLang);
-            if (!($r = static::postJSON("https://translate.api.cloud.yandex.net/translate/v2/translate",
-                                    $data, [CURLOPT_HTTPHEADER => ["Authorization: Bearer $IAmToken"]]))) return null;
-            if (!is_array($translations = ($r['translations'] ?? false))) {
-                static::stderr("Not found translations in answer\n".print_r($r, 1));
-                return null;
+            $translations = [];
+            while ($texts) {
+                $chunk = []; $clen = 0;
+                while ($texts) {
+                    $text = array_shift($texts);
+                    $len = strlen($text) + 1;
+                    if (($clen + $len) > 8000) {
+                        array_unshift($texts, $text);
+                        break;
+                    }
+                    $chunk[] = $text;
+                    if (count($chunk) >= 50) break;
+                }
+                $data = [
+                    'folder_id' => $yandex[static::YANDEX_FOLDER_ID],
+                    'texts' => $chunk,
+                    'targetLanguageCode' => mb_strtolower($toLang),
+                ];
+                if ($fromLang) $data['sourceLanguageCode'] = mb_strtolower($fromLang);
+                if (!($r = static::postJSON("https://translate.api.cloud.yandex.net/translate/v2/translate",
+                                        $data, [CURLOPT_HTTPHEADER => ["Authorization: Bearer $IAmToken"]]))) return null;
+                if (!is_array($ctranslations = ($r['translations'] ?? false))) {
+                    static::stderr("Not found translations in answer\n".print_r($r, 1));
+                    return null;
+                }
+                $translations = array_merge($translations, $ctranslations);
             }
             return $translations;
         }

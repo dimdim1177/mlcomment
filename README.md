@@ -57,6 +57,8 @@ Options:
 - -o OPEN - open of multi-line comments, may be many variants space separated
 - -c CLOSE - close of multi-line comments, may be many variants space separated
 - -y JSONFILE - JSON-file with access to Yandex Cloud with fields: folder_id AND (oauth_token OR iam_token) (required for mode translate, ignored in other modes)
+- -d - don't attach sign ~ to translated comments (by default attach ~)
+- -i - patch inplace, overwrite result of patch to source file (by default write to stdout)
 
 Modes:
 - dox - Preprocessing comments for Doxygen
@@ -64,8 +66,6 @@ Modes:
 - translate - Add comments in selected language by auto-translate from most priority exists language
 
 Input: FILENAME - path to file for patching, '-' - use stdin
-
-Output: Always to stdout
 
 For example:
 
