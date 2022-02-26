@@ -415,7 +415,10 @@
                         $firstComment = reset($t['comments']);
                         if (!$firstComment['close']) {//RU Однострочные комментарии
                             $lines = explode("\n", $text);
-                            foreach ($lines as &$line) $line = (string)$prefix.$firstComment['open'].static::$lang.$draft.(' ' !== substr($line, 0, 1) ? ' ' : '').$line;
+                            foreach ($lines as $i => &$line) {
+                                $line = (string)$prefix.$firstComment['open'].static::$lang.$draft.
+                                    (($i > 0) && (' ' !== substr($line, 0, 1)) ? ' ' : '').$line;
+                            }
                             unset($line);
                             $text = implode("\n", $lines);
                         } else {//RU Многострочные комментарии
